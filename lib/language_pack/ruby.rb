@@ -597,7 +597,12 @@ params = CGI.parse(uri.query || "")
 
   def generate_jekyll_site
     puts "Building jekyll site"
-    pipe("env PATH=$PATH bundle exec jekyll --no-server --no-auto 2>&1")
+    jekyll_version = LanguagePack::Ruby.gem_version('jekyll')
+    
+    if jekyll_version >= Gem::Version.new('1.0.0.rc1')
+      pipe("env PATH=$PATH bundle exec jekyll build 2>&1")
+    else
+      pipe("env PATH=$PATH bundle exec jekyll --no-server --no-auto 2>&1")
     unless $? == 0
       error "Failed to generate site with jekyll."
     end
