@@ -596,16 +596,20 @@ params = CGI.parse(uri.query || "")
   end
 
   def generate_jekyll_site
-    puts "Building jekyll site"
+    topic "Running: jekyll build"
+
     jekyll_version = LanguagePack::Ruby.gem_version('jekyll')
 
-    if jekyll_version >= Gem::Version.new('1.0.0.rc1')
-      pipe("env PATH=$PATH:bin bundle exec jekyll build 2>&1")
-    else
-      pipe("env PATH=$PATH bundle exec jekyll --no-server --no-auto 2>&1")
-    end
+    build_command = jekyll_version >= Gem::Version.new('1.0.0.rc1') ?
+      "env PATH=$PATH:bin bundle exec jekyll build 2>&1" :
+      "env PATH=$PATH bundle exec jekyll --no-server --no-auto 2>&1"
 
-    unless $? == 0
+    require 'benchmark'
+    time = Benchmark.realtime { pipe(build_command) }
+
+    if $?.success?
+      puts "Jekyll build completed (#{"%.2f" % time}s)"
+    else
       error "Failed to generate site with jekyll."
     end
   end
